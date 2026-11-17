@@ -21,6 +21,11 @@ h2{font-size:24px;margin:22px 0 8px}
 .top button.sec{background:transparent;color:#fff;border-color:rgba(255,255,255,.7)}
 .top nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
 .awning{height:16px;background:repeating-linear-gradient(90deg,var(--red) 0 26px,#fff 26px 52px);border-bottom:4px solid var(--green)}
+.hero{position:relative;max-width:948px;width:calc(100% - 32px);margin:16px auto 0;border-radius:16px;overflow:hidden;background:var(--dark);border-bottom:5px solid var(--yellow);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.hero img{display:block;width:100%;height:auto;aspect-ratio:2/1;max-height:320px;object-fit:cover}
+.hero div{position:absolute;left:0;right:0;bottom:0;padding:36px 16px 14px;background:linear-gradient(to bottom,rgba(30,77,43,0),rgba(30,77,43,.92));color:#fff}
+.hero h1{margin:0;font-size:30px;line-height:1.1}
+.hero p{margin:4px 0 0;font-weight:800;color:var(--yellow)}
 main{max-width:980px;margin:0 auto;padding:8px 16px 120px}
 button{font:inherit;font-weight:800;border:2px solid var(--green);border-radius:10px;padding:9px 16px;cursor:pointer;background:var(--green);color:#fff}
 button.sec{background:#fff;color:var(--green)}
@@ -60,6 +65,7 @@ body>*:not(#print-area){display:none!important}#print-area{display:block}@page{m
 <body>
 <header class="top"><div class="logo" role="img" aria-label="Logo Barraca Jatobá"></div><div><div class="brand">Barraca Jatobá</div><small id="sub"></small></div><nav id="nav"></nav></header>
 <div class="awning"></div>
+<section class="hero" id="hero" style="display:none"><img src="barraca-capa.jpg" width="960" height="480" alt="Foto da Barraca Jatobá ao pôr do sol, com mesas de madeira sob a árvore e as palhoças"><div><h1>Bem-vindo!</h1><p>Escolha o que quiser e faça seu pedido aqui da mesa.</p></div></section>
 <main id="app"></main>
 <div id="toast" role="status"></div>
 <div id="print-area"></div>
@@ -83,6 +89,7 @@ async function menu(token){
   $('#sub').textContent='Mesa '+m.data;
   const prods=p.data||[],cart={};
   const draw=()=>{
+    $('#hero').style.display='block';
     const n=Object.values(cart).reduce((a,b)=>a+b,0),tot=prods.reduce((a,x)=>a+(cart[x.id]||0)*x.preco,0);
     app.innerHTML=(c.data||[]).map(cat=>{
       const ps=prods.filter(x=>x.category_id===cat.id);if(!ps.length)return'';
@@ -94,6 +101,7 @@ async function menu(token){
     if(n)app.innerHTML+=`<div class="bar"><button class="yel" id="rev">Ver pedido · ${n} ${n>1?'itens':'item'} · ${money(tot)}</button></div>`;
   };
   const review=()=>{
+    $('#hero').style.display='none';
     const its=prods.filter(x=>cart[x.id]);
     app.innerHTML='<h2>Seu pedido</h2>'+its.map(x=>`<div class="it"><span>${cart[x.id]}x ${esc(x.nome)}</span><span class="price">${money(cart[x.id]*x.preco)}</span></div>`).join('')+
     `<p><b>Total: ${money(its.reduce((a,x)=>a+cart[x.id]*x.preco,0))}</b></p><textarea id="obs" rows="3" maxlength="300" placeholder="Observações (ex.: sem cebola)"></textarea><div class="row" style="margin-top:12px"><button class="sec" id="back">Voltar</button><button id="send">Enviar pedido</button></div>`;
