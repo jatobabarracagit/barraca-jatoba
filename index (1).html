@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Barraca Jatobá</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--red:#D62828;--green:#2E6B34;--dark:#1E4D2B;--leaf:#7DB544;--yellow:#F7B52C;--ink:#2B1B16;--mut:#6D625C;--line:#E8E2D9;--bg:#FFFEFB}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.45 Nunito,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+h1,h2,h3,.brand{font-family:'Lilita One',Impact,sans-serif;font-weight:400;letter-spacing:.2px}
+h2{font-size:24px;margin:22px 0 8px}
+.top{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--dark)}
+.logo{width:60px;height:60px;flex:none;border-radius:50%;background:#fff url(logo.png) center/contain no-repeat;box-shadow:0 0 0 3px #fff}
+.brand{font-size:26px;line-height:1;color:#fff}
+.top small{display:block;color:var(--yellow);font-weight:800;font-size:15px;margin-top:2px}
+.top button.sec{background:transparent;color:#fff;border-color:rgba(255,255,255,.7)}
+.top nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.awning{height:16px;background:repeating-linear-gradient(90deg,var(--red) 0 26px,#fff 26px 52px);border-bottom:4px solid var(--green)}
+.hero{position:relative;max-width:948px;width:calc(100% - 32px);margin:16px auto 0;border-radius:16px;overflow:hidden;background:var(--dark);border-bottom:5px solid var(--yellow);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.hero img{display:block;width:100%;height:auto;aspect-ratio:2/1;max-height:320px;object-fit:cover}
+.hero div{position:absolute;left:0;right:0;bottom:0;padding:36px 16px 14px;background:linear-gradient(to bottom,rgba(30,77,43,0),rgba(30,77,43,.92));color:#fff}
+.hero h1{margin:0;font-size:30px;line-height:1.1}
+.hero p{margin:4px 0 0;font-weight:800;color:var(--yellow)}
+main{max-width:980px;margin:0 auto;padding:8px 16px 120px}
+button{font:inherit;font-weight:800;border:2px solid var(--green);border-radius:10px;padding:9px 16px;cursor:pointer;background:var(--green);color:#fff}
+button.sec{background:#fff;color:var(--green)}
+button.red{background:#fff;color:var(--red);border-color:var(--red)}
+button.yel{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+input,select,textarea{font:inherit;width:100%;padding:10px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.cat{color:var(--green);font-size:28px;margin:28px 0 4px;display:flex;align-items:center;gap:12px}
+.cat::after{content:"";flex:1;height:4px;border-radius:4px;background:var(--leaf);opacity:.45}
+.it{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.it h3{margin:0;font-size:20px}.it p{margin:2px 0;color:var(--mut);font-size:14px}
+.price{font-weight:800;color:var(--red)}
+.qty{display:flex;align-items:center;gap:10px;flex:none}
+.qty button{width:40px;height:40px;padding:0;font-size:22px;border-radius:50%}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:4px solid var(--yellow)}
+.bar button{display:block;width:100%;max-width:948px;margin:0 auto;padding:14px;font-size:18px}
+.card{border:2px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+.card.new{border-color:var(--yellow);background:#FFF8E1}
+.card ul{margin:8px 0;padding-left:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.tag{background:var(--yellow);border-radius:20px;padding:1px 10px;font-weight:800;font-size:14px}
+.kpi{font:400 30px 'Lilita One',Impact,sans-serif;color:var(--green);line-height:1.1}
+.mut{color:var(--mut);font-size:14px}
+table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+.qrs div{text-align:center;font-weight:800}.qrs img{width:150px;height:150px;image-rendering:pixelated}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;display:none;z-index:9;max-width:90vw}
+#print-area{display:none}
+@media print{
+body>*:not(#print-area){display:none!important}#print-area{display:block}@page{margin:0}
+.tk{width:72mm;margin:0 auto;font:14px monospace;color:#000}.tk h2{font:700 20px monospace;text-align:center;margin:6px 0}
+.tk .big{font:700 28px monospace;text-align:center}.tk hr{border:0;border-top:1px dashed #000}
+.qrs{display:grid;grid-template-columns:repeat(3,1fr);gap:10mm;padding:10mm}.qrs div{break-inside:avoid;font-size:18px}.qrs img{width:50mm;height:50mm}}
+</style>
+</head>
+<body>
+<header class="top"><div class="logo" role="img" aria-label="Logo Barraca Jatobá"></div><div><div class="brand">Barraca Jatobá</div><small id="sub"></small></div><nav id="nav"></nav></header>
+<div class="awning"></div>
+<section class="hero" id="hero" style="display:none"><img src="barraca-capa.jpg" width="960" height="480" alt="Foto da Barraca Jatobá ao pôr do sol, com mesas de madeira sob a árvore e as palhoças"><div><h1>Bem-vindo!</h1><p>Escolha o que quiser e faça seu pedido aqui da mesa.</p></div></section>
+<main id="app"></main>
+<div id="toast" role="status"></div>
+<div id="print-area"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+const sb=supabase.createClient('https://zmiirmlxwumooznyosmw.supabase.co','sb_publishable_3wgyFBe0iRBY3-kynqCw0w_Jd_wueT0');
+const $=s=>document.querySelector(s),app=$('#app'),O={};
+const money=v=>'R$ '+Number(v).toFixed(2).replace('.',',');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const total=its=>its.reduce((a,i)=>a+i.quantidade*i.preco_unitario,0);
+const hora=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const nav=h=>$('#nav').innerHTML=h;
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3500)}
+function beep(){try{const a=new AudioContext(),o=a.createOscillator();o.connect(a.destination);o.frequency.value=880;o.start();setTimeout(()=>o.stop(),250)}catch(e){}}
+
+/* ---------- Cardápio do cliente (abre pelo QR code da mesa) ---------- */
+async function menu(token){
+  const [m,c,p]=await Promise.all([sb.rpc('get_mesa',{p_token:token}),sb.from('categories').select('*').eq('ativo',true).order('ordem'),sb.from('products').select('*').eq('ativo',true).order('nome')]);
+  if(!m.data){app.innerHTML='<h2>QR code inválido</h2><p>Peça ajuda a um atendente.</p>';return}
+  $('#sub').textContent='Mesa '+m.data;
+  const prods=p.data||[],cart={};
+  const draw=()=>{
+    $('#hero').style.display='block';
+    const n=Object.values(cart).reduce((a,b)=>a+b,0),tot=prods.reduce((a,x)=>a+(cart[x.id]||0)*x.preco,0);
+    app.innerHTML=(c.data||[]).map(cat=>{
+      const ps=prods.filter(x=>x.category_id===cat.id);if(!ps.length)return'';
+      return`<h2 class="cat">${esc(cat.nome)}</h2>`+ps.map(x=>{
+        const out=x.controla_estoque&&x.estoque_atual<=0;
+        return`<div class="it"><div><h3>${esc(x.nome)}</h3>${x.descricao?`<p>${esc(x.descricao)}</p>`:''}<span class="price">${money(x.preco)}</span></div>`+
+        (out?'<span class="tag">Esgotado</span>':`<div class="qty">${cart[x.id]?`<button aria-label="Tirar um" data-a="-" data-id="${x.id}">−</button><b>${cart[x.id]}</b>`:''}<button aria-label="Adicionar" data-a="+" data-id="${x.id}">+</button></div>`)+'</div>'}).join('')}).join('')
+      ||'<p>O cardápio ainda não tem produtos.</p>';
+    if(n)app.innerHTML+=`<div class="bar"><button class="yel" id="rev">Ver pedido · ${n} ${n>1?'itens':'item'} · ${money(tot)}</button></div>`;
+  };
+  const review=()=>{
+    $('#hero').style.display='none';
+    const its=prods.filter(x=>cart[x.id]);
+    app.innerHTML='<h2>Seu pedido</h2>'+its.map(x=>`<div class="it"><span>${cart[x.id]}x ${esc(x.nome)}</span><span class="price">${money(cart[x.id]*x.preco)}</span></div>`).join('')+
+    `<p><b>Total: ${money(its.reduce((a,x)=>a+cart[x.id]*x.preco,0))}</b></p><textarea id="obs" rows="3" maxlength="300" placeholder="Observações (ex.: sem cebola)"></textarea><div class="row" style="margin-top:12px"><button class="sec" id="back">Voltar</button><button id="send">Enviar pedido</button></div>`;
+  };
+  app.onclick=async e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.a){const id=b.dataset.id;cart[id]=Math.min(20,(cart[id]||0)+(b.dataset.a==='+'?1:-1));if(cart[id]<1)delete cart[id];return draw()}
+    if(b.id==='rev')review();
+    if(b.id==='back'||b.id==='again')draw();
+    if(b.id==='send'){
+      b.disabled=true;
+      const{data,error}=await sb.rpc('criar_pedido',{p_token:token,p_observacao:$('#obs').value||null,p_itens:Object.entries(cart).map(([product_id,quantidade])=>({product_id,quantidade}))});
+      if(error){toast('Não foi possível enviar. Tente de novo.');b.disabled=false;return}
+      for(const k in cart)delete cart[k];
+      app.innerHTML=`<h2>Pedido enviado!</h2><p>Pedido nº ${data[0].pedido_numero}. O caixa vai confirmar e já já chega na sua mesa.</p><button id="again">Fazer outro pedido</button>`;
+    }
+  };
+  draw();
+}
+
+/* ---------- Equipe: login, caixa e administração ---------- */
+function login(){
+  nav('');
+  app.innerHTML='<form id="lf" class="card" style="max-width:380px;margin:30px auto"><h2 style="margin-top:0">Entrar</h2><p><input id="em" type="email" placeholder="E-mail" required autocomplete="username"></p><p><input id="pw" type="password" placeholder="Senha" required autocomplete="current-password"></p><button>Entrar</button></form>';
+  $('#lf').onsubmit=async e=>{e.preventDefault();const{error}=await sb.auth.signInWithPassword({email:$('#em').value,password:$('#pw').value});error?toast('E-mail ou senha incorretos.'):staff()};
+}
+
+async function staff(){
+  app.onclick=null;$('#sub').textContent='';
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session)return login();
+  const{data:me}=await sb.from('staff').select('*').maybeSingle();
+  nav((me?.role==='admin'?'<button class="sec" data-go="caixa">Caixa</button><button class="sec" data-go="produtos">Produtos</button><button class="sec" data-go="faturamento">Faturamento</button><button class="sec" data-go="qr">QR codes</button>':'')+'<button class="sec" data-go="sair">Sair</button>');
+  $('#nav').onclick=e=>{const g=e.target.dataset.go;if(g==='sair')sb.auth.signOut().then(()=>location.reload());else if(g)show(g)};
+  if(!me){app.innerHTML='<h2>Sem permissão</h2><p>Esse usuário não faz parte da equipe.</p>';return}
+  let view='caixa';
+  const show=v=>{view=v;({caixa,produtos,faturamento,qr})[v]()};
+  sb.channel('pedidos').on('postgres_changes',{event:'*',schema:'public',table:'orders'},p=>{if(p.eventType==='INSERT')beep();if(view==='caixa')caixa()}).subscribe();
+  setInterval(()=>{if(view==='caixa')caixa()},20000);
+  show('caixa');
+}
+
+async function imprimir(o,segundaVia){
+  $('#print-area').innerHTML=`<div class="tk"><h2>Barraca Jatobá</h2><div class="big">MESA ${o.mesas.numero}</div><div>Pedido #${o.numero} - ${hora(o.criado_em)}${segundaVia?' (2ª via)':''}</div><hr>`+
+    o.order_items.map(i=>`<div><b>${i.quantidade}x</b> ${esc(i.nome_produto)}</div>`).join('')+(o.observacao?`<hr><div>OBS: ${esc(o.observacao)}</div>`:'')+'<hr><br></div>';
+  window.print();
+  if(!segundaVia)await sb.rpc('marcar_impresso',{p_order_id:o.id});
+}
+
+async function caixa(){
+  const{data,error}=await sb.from('orders').select('*,mesas(numero),order_items(*)').in('status',['pendente','aprovado']).order('criado_em');
+  if(error)return toast(error.message);
+  data.forEach(o=>O[o.id]=o);
+  const pend=data.filter(o=>o.status==='pendente'),mesas={};
+  data.filter(o=>o.status==='aprovado').forEach(o=>(mesas[o.mesa_id]??=[]).push(o));
+  const lista=o=>'<ul>'+o.order_items.map(i=>`<li>${i.quantidade}x ${esc(i.nome_produto)}</li>`).join('')+'</ul>'+(o.observacao?`<p><i>Obs: ${esc(o.observacao)}</i></p>`:'');
+  app.innerHTML=`<h2>Aguardando aprovação (${pend.length})</h2>`+
+    (pend.length?'<div class="grid">'+pend.map(o=>`<div class="card new"><div class="row"><b>Mesa ${o.mesas.numero}</b><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span></div>${lista(o)}<div class="row"><b>${money(total(o.order_items))}</b><button data-a="ok" data-id="${o.id}">Gerar pedido</button><button class="red" data-a="no" data-id="${o.id}">Recusar</button></div></div>`).join('')+'</div>':'<p>Nenhum pedido novo.</p>')+
+    '<h2>Mesas com conta aberta</h2>'+
+    (Object.keys(mesas).length?'<div class="grid">'+Object.entries(mesas).map(([mid,os])=>`<div class="card"><div class="row"><h3 style="margin:0">Mesa ${os[0].mesas.numero}</h3><b style="margin-left:auto">${money(os.reduce((a,o)=>a+total(o.order_items),0))}</b></div>`+
+      os.map(o=>`<div class="row"><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span><button class="sec" style="margin-left:auto;padding:4px 10px" data-a="re" data-id="${o.id}">Reimprimir</button></div>${lista(o)}`).join('')+
+      `<button class="yel" data-a="pay" data-id="${mid}">Fechar conta</button></div>`).join('')+'</div>':'<p>Nenhuma mesa com conta aberta.</p>');
+  app.onclick=async e=>{
+    const b=e.target.closest('button');if(!b||!b.dataset.a)return;
+    const{a,id}=b.dataset;b.disabled=true;
+    if(a==='ok'){const{error}=await sb.rpc('aprovar_pedido',{p_order_id:id});if(error){toast(error.message);return caixa()}await imprimir(O[id])}
+    if(a==='no'&&confirm('Recusar este pedido?'))await sb.rpc('recusar_pedido',{p_order_id:id});
+    if(a==='re')await imprimir(O[id],true);
+    if(a==='pay'&&confirm('Fechar a conta desta mesa?'))await sb.rpc('fechar_mesa',{p_mesa_id:id});
+    caixa();
+  };
+}
+
+async function produtos(){
+  const[c,p]=await Promise.all([sb.from('categories').select('*').order('ordem'),sb.from('products').select('*').order('nome')]);
+  const cn=Object.fromEntries(c.data.map(x=>[x.id,x.nome]));
+  app.innerHTML=`<h2>Novo produto</h2><div class="card"><div class="grid"><input id="n" placeholder="Nome"><select id="c">${c.data.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select><input id="pr" type="number" step="0.01" min="0" placeholder="Preço (R$)"><input id="d" placeholder="Descrição (opcional)"></div><label class="row"><input id="ce" type="checkbox" style="width:auto"> Controlar estoque deste produto</label><button id="add">Adicionar produto</button></div>`+
+    '<h2>Produtos</h2><div style="overflow-x:auto"><table><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ativo</th></tr>'+
+    p.data.map(x=>`<tr><td>${esc(x.nome)}</td><td>${esc(cn[x.category_id])}</td><td><input type="number" step="0.01" min="0" value="${x.preco}" data-f="preco" data-id="${x.id}" style="width:100px"></td><td>${x.controla_estoque?`${x.estoque_atual} <button class="sec" style="padding:3px 10px" data-a="est" data-id="${x.id}">+ Entrada</button>`:'-'}</td><td><input type="checkbox" style="width:auto" data-f="ativo" data-id="${x.id}" ${x.ativo?'checked':''}></td></tr>`).join('')+'</table></div>';
+  app.onchange=async e=>{
+    const t=e.target,f=t.dataset.f;if(!f)return;
+    const{error}=await sb.from('products').update({[f]:f==='ativo'?t.checked:+t.value}).eq('id',t.dataset.id);
+    toast(error?error.message:'Salvo.');
+  };
+  app.onclick=async e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.id==='add'){
+      const nome=$('#n').value.trim(),preco=parseFloat($('#pr').value);
+      if(!nome||isNaN(preco))return toast('Preencha o nome e o preço.');
+      const{error}=await sb.from('products').insert({nome,preco,category_id:$('#c').value,descricao:$('#d').value.trim()||null,controla_estoque:$('#ce').checked});
+      if(error)return toast(error.message);toast('Produto adicionado.');produtos();
+    }
+    if(b.dataset.a==='est'){
+      const v=parseFloat((prompt('Quantidade que entrou no estoque:')||'').replace(',','.'));
+      if(!(v>0))return;
+      const{error}=await sb.rpc('movimentar_estoque',{p_product_id:b.dataset.id,p_delta:v,p_tipo:'entrada'});
+      if(error)return toast(error.message);produtos();
+    }
+  };
+}
+
+async function faturamento(){
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const set=(a,b)=>{$('#de').value=fmt(a);$('#ate').value=fmt(b)};
+  app.innerHTML='<h2>Faturamento</h2><div class="card"><div class="row"><button class="sec" data-p="0">Hoje</button><button class="sec" data-p="6">7 dias</button><button class="sec" data-p="29">30 dias</button><button class="sec" data-p="m">Este mês</button></div><div class="row"><label>De <input type="date" id="de" style="width:auto"></label><label>Até <input type="date" id="ate" style="width:auto"></label><button id="ok">Ver</button></div></div><div id="res"></div>';
+  const ver=async()=>{
+    const de=new Date($('#de').value+'T00:00:00'),ate=new Date($('#ate').value+'T00:00:00');
+    if(isNaN(de)||isNaN(ate)||ate<de)return toast('Confira as datas.');
+    ate.setDate(ate.getDate()+1);
+    $('#res').innerHTML='<p>Carregando...</p>';
+    let rows=[],from=0;
+    for(;;){
+      const{data,error}=await sb.from('orders').select('id,pago_em,order_items(product_id,nome_produto,quantidade,preco_unitario)').eq('status','pago').gte('pago_em',de.toISOString()).lt('pago_em',ate.toISOString()).order('pago_em').range(from,from+999);
+      if(error)return toast(error.message);
+      rows=rows.concat(data);if(data.length<1000)break;from+=1000;
+    }
+    const[{data:open},{data:pr},{data:cs}]=await Promise.all([sb.from('orders').select('order_items(quantidade,preco_unitario)').eq('status','aprovado'),sb.from('products').select('id,category_id'),sb.from('categories').select('id,nome')]);
+    const cat=Object.fromEntries((pr||[]).map(x=>[x.id,x.category_id])),cn=Object.fromEntries((cs||[]).map(x=>[x.id,x.nome]));
+    const dia={},prod={},cats={};let fat=0;
+    rows.forEach(o=>{
+      const t=total(o.order_items),k=fmt(new Date(o.pago_em));fat+=t;
+      dia[k]??={n:0,v:0};dia[k].n++;dia[k].v+=t;
+      o.order_items.forEach(i=>{
+        const v=i.quantidade*i.preco_unitario,c=cn[cat[i.product_id]]||'Outros';
+        prod[i.nome_produto]??={q:0,v:0};prod[i.nome_produto].q+=i.quantidade;prod[i.nome_produto].v+=v;
+        cats[c]??={q:0,v:0};cats[c].q+=i.quantidade;cats[c].v+=v;
+      });
+    });
+    const aberto=(open||[]).reduce((a,o)=>a+total(o.order_items),0);
+    const tb=(obj,t)=>`<h2>${t}</h2><div style="overflow-x:auto"><table><tr><th>${t==='Por categoria'?'Categoria':'Produto'}</th><th>Qtde</th><th>Total</th></tr>`+Object.entries(obj).sort((a,b)=>b[1].v-a[1].v).map(([k,x])=>`<tr><td>${esc(k)}</td><td>${x.q}</td><td>${money(x.v)}</td></tr>`).join('')+'</table></div>';
+    $('#res').innerHTML=`<div class="grid" style="margin-top:12px"><div class="card"><div class="mut">Faturamento (contas pagas)</div><div class="kpi">${money(fat)}</div></div><div class="card"><div class="mut">Pedidos pagos</div><div class="kpi">${rows.length}</div></div><div class="card"><div class="mut">Ticket médio por pedido</div><div class="kpi">${money(rows.length?fat/rows.length:0)}</div></div><div class="card"><div class="mut">Em aberto agora (mesas ainda não fechadas)</div><div class="kpi" style="color:var(--red)">${money(aberto)}</div></div></div>`+
+      (rows.length?`<h2>Por dia</h2><div style="overflow-x:auto"><table><tr><th>Dia</th><th>Pedidos</th><th>Total</th></tr>`+Object.entries(dia).sort().map(([k,x])=>`<tr><td>${k.split('-').reverse().join('/')}</td><td>${x.n}</td><td>${money(x.v)}</td></tr>`).join('')+'</table></div>'+tb(cats,'Por categoria')+tb(prod,'Mais vendidos'):'<p>Nenhuma conta paga neste período.</p>');
+  };
+  app.onchange=null;
+  app.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.p){const p=b.dataset.p,h=new Date(),a=new Date();p==='m'?a.setDate(1):a.setDate(a.getDate()-Number(p));set(a,h);ver()}
+    if(b.id==='ok')ver();
+  };
+  const hoje=new Date();set(hoje,hoje);ver();
+}
+
+async function qr(){
+  const{data}=await sb.from('mesas').select('*').order('numero');
+  const base=location.origin+location.pathname;
+  const cards=data.map(m=>{const q=qrcode(0,'M');q.addData(base+'?mesa='+m.token);q.make();return`<div><img alt="QR code da mesa ${m.numero}" src="${q.createDataURL(6,2)}"><br>Mesa ${m.numero}</div>`}).join('');
+  app.innerHTML=`<h2>QR codes das mesas</h2><p>Imprima e cole um em cada mesa. Cada QR abre o cardápio da mesa certa.</p><button id="pq">Imprimir QR codes</button><div class="grid qrs" style="margin-top:16px">${cards}</div>`;
+  app.onchange=null;
+  app.onclick=e=>{if(e.target.id==='pq'){$('#print-area').innerHTML=`<div class="qrs">${cards}</div>`;window.print()}};
+}
+
+const mesa=new URLSearchParams(location.search).get('mesa');
+mesa?menu(mesa):staff();
+</script>
+</body>
+</html>
