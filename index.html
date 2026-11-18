@@ -177,10 +177,10 @@ async function caixa(){
 
 async function produtos(){
   const[c,p]=await Promise.all([sb.from('categories').select('*').order('ordem'),sb.from('products').select('*').order('nome')]);
-  const cn=Object.fromEntries(c.data.map(x=>[x.id,x.nome]));
-  app.innerHTML=`<h2>Novo produto</h2><div class="card"><div class="grid"><input id="n" placeholder="Nome"><select id="c">${c.data.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select><input id="pr" type="number" step="0.01" min="0" placeholder="Preço (R$)"><input id="d" placeholder="Descrição (opcional)"></div><label class="row"><input id="ce" type="checkbox" style="width:auto"> Controlar estoque deste produto</label><button id="add">Adicionar produto</button></div>`+
-    '<h2>Produtos</h2><div style="overflow-x:auto"><table><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ativo</th></tr>'+
-    p.data.map(x=>`<tr><td>${esc(x.nome)}</td><td>${esc(cn[x.category_id])}</td><td><input type="number" step="0.01" min="0" value="${x.preco}" data-f="preco" data-id="${x.id}" style="width:100px"></td><td>${x.controla_estoque?`${x.estoque_atual} <button class="sec" style="padding:3px 10px" data-a="est" data-id="${x.id}">+ Entrada</button>`:'-'}</td><td><input type="checkbox" style="width:auto" data-f="ativo" data-id="${x.id}" ${x.ativo?'checked':''}></td></tr>`).join('')+'</table></div>';
+  const cn=Object.fromEntries(c.data.map(x=>[x.id,x.nome]));const byId=Object.fromEntries(p.data.map(x=>[x.id,x]));let editId=null;
+  app.innerHTML=`<h2 id="ft">Novo produto</h2><div class="card"><div class="grid"><input id="n" placeholder="Nome"><select id="c">${c.data.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select><input id="pr" type="number" step="0.01" min="0" placeholder="Preço (R$)"><input id="d" placeholder="Descrição (opcional)"></div><label class="row"><input id="ce" type="checkbox" style="width:auto"> Controlar estoque deste produto</label><div class="row"><button id="add">Adicionar produto</button><button class="sec" id="cancel" style="display:none">Cancelar</button></div></div>`+
+    '<h2>Produtos</h2><div style="overflow-x:auto"><table><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ativo</th><th></th></tr>'+
+    p.data.map(x=>`<tr><td>${esc(x.nome)}</td><td>${esc(cn[x.category_id])}</td><td><input type="number" step="0.01" min="0" value="${x.preco}" data-f="preco" data-id="${x.id}" style="width:100px"></td><td>${x.controla_estoque?`${x.estoque_atual} <button class="sec" style="padding:3px 10px" data-a="est" data-id="${x.id}">+ Entrada</button>`:'-'}</td><td><input type="checkbox" style="width:auto" data-f="ativo" data-id="${x.id}" ${x.ativo?'checked':''}></td><td><button class="sec" style="padding:3px 10px" data-a="edit" data-id="${x.id}">Editar</button></td></tr>`).join('')+'</table></div>';
   app.onchange=async e=>{
     const t=e.target,f=t.dataset.f;if(!f)return;
     const{error}=await sb.from('products').update({[f]:f==='ativo'?t.checked:+t.value}).eq('id',t.dataset.id);
@@ -191,8 +191,16 @@ async function produtos(){
     if(b.id==='add'){
       const nome=$('#n').value.trim(),preco=parseFloat($('#pr').value);
       if(!nome||isNaN(preco))return toast('Preencha o nome e o preço.');
-      const{error}=await sb.from('products').insert({nome,preco,category_id:$('#c').value,descricao:$('#d').value.trim()||null,controla_estoque:$('#ce').checked});
-      if(error)return toast(error.message);toast('Produto adicionado.');produtos();
+      const campos={nome,preco,category_id:$('#c').value,descricao:$('#d').value.trim()||null,controla_estoque:$('#ce').checked};
+      const{error}=editId?await sb.from('products').update(campos).eq('id',editId):await sb.from('products').insert(campos);
+      if(error)return toast(error.message);toast(editId?'Produto atualizado.':'Produto adicionado.');produtos();
+    }
+    if(b.id==='cancel')produtos();
+    if(b.dataset.a==='edit'){
+      const x=byId[b.dataset.id];editId=x.id;
+      $('#n').value=x.nome;$('#c').value=x.category_id;$('#pr').value=x.preco;$('#d').value=x.descricao||'';$('#ce').checked=!!x.controla_estoque;
+      $('#ft').textContent='Editar produto';$('#add').textContent='Salvar alterações';$('#cancel').style.display='';
+      window.scrollTo({top:0,behavior:'smooth'});
     }
     if(b.dataset.a==='est'){
       const v=parseFloat((prompt('Quantidade que entrou no estoque:')||'').replace(',','.'));
