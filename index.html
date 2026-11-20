@@ -78,6 +78,7 @@ const money=v=>'R$ '+Number(v).toFixed(2).replace('.',',');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const total=its=>its.reduce((a,i)=>a+i.quantidade*i.preco_unitario,0);
 const hora=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const nm=n=>Number(n)===0?'Balcão':'Mesa '+n;
 const nav=h=>$('#nav').innerHTML=h;
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',3500)}
 function beep(){try{const a=new AudioContext(),o=a.createOscillator();o.connect(a.destination);o.frequency.value=880;o.start();setTimeout(()=>o.stop(),250)}catch(e){}}
@@ -134,18 +135,18 @@ async function staff(){
   const{data:{session}}=await sb.auth.getSession();
   if(!session)return login();
   const{data:me}=await sb.from('staff').select('*').maybeSingle();
-  nav((me?.role==='admin'?'<button class="sec" data-go="caixa">Caixa</button><button class="sec" data-go="produtos">Produtos</button><button class="sec" data-go="faturamento">Faturamento</button><button class="sec" data-go="qr">QR codes</button>':'')+'<button class="sec" data-go="sair">Sair</button>');
+  nav('<button class="sec" data-go="caixa">Caixa</button><button class="sec" data-go="novo">Novo pedido</button>'+(me?.role==='admin'?'<button class="sec" data-go="produtos">Produtos</button><button class="sec" data-go="faturamento">Faturamento</button><button class="sec" data-go="qr">QR codes</button>':'')+'<button class="sec" data-go="sair">Sair</button>');
   $('#nav').onclick=e=>{const g=e.target.dataset.go;if(g==='sair')sb.auth.signOut().then(()=>location.reload());else if(g)show(g)};
   if(!me){app.innerHTML='<h2>Sem permissão</h2><p>Esse usuário não faz parte da equipe.</p>';return}
   let view='caixa';
-  const show=v=>{view=v;({caixa,produtos,faturamento,qr})[v]()};
+  const show=v=>{view=v;({caixa,novo:novoPedido,produtos,faturamento,qr})[v]()};
   sb.channel('pedidos').on('postgres_changes',{event:'*',schema:'public',table:'orders'},p=>{if(p.eventType==='INSERT')beep();if(view==='caixa')caixa()}).subscribe();
   setInterval(()=>{if(view==='caixa')caixa()},20000);
   show('caixa');
 }
 
 async function imprimir(o,segundaVia){
-  $('#print-area').innerHTML=`<div class="tk"><h2>Barraca Jatobá</h2><div class="big">MESA ${o.mesas.numero}</div><div>Pedido #${o.numero} - ${hora(o.criado_em)}${segundaVia?' (2ª via)':''}</div><hr>`+
+  $('#print-area').innerHTML=`<div class="tk"><h2>Barraca Jatobá</h2><div class="big">${nm(o.mesas.numero).toUpperCase()}</div><div>Pedido #${o.numero} - ${hora(o.criado_em)}${segundaVia?' (2ª via)':''}</div><hr>`+
     o.order_items.map(i=>`<div><b>${i.quantidade}x</b> ${esc(i.nome_produto)}</div>`).join('')+(o.observacao?`<hr><div>OBS: ${esc(o.observacao)}</div>`:'')+'<hr><br></div>';
   window.print();
   if(!segundaVia)await sb.rpc('marcar_impresso',{p_order_id:o.id});
@@ -159,9 +160,9 @@ async function caixa(){
   data.filter(o=>o.status==='aprovado').forEach(o=>(mesas[o.mesa_id]??=[]).push(o));
   const lista=o=>'<ul>'+o.order_items.map(i=>`<li>${i.quantidade}x ${esc(i.nome_produto)}</li>`).join('')+'</ul>'+(o.observacao?`<p><i>Obs: ${esc(o.observacao)}</i></p>`:'');
   app.innerHTML=`<h2>Aguardando aprovação (${pend.length})</h2>`+
-    (pend.length?'<div class="grid">'+pend.map(o=>`<div class="card new"><div class="row"><b>Mesa ${o.mesas.numero}</b><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span></div>${lista(o)}<div class="row"><b>${money(total(o.order_items))}</b><button data-a="ok" data-id="${o.id}">Gerar pedido</button><button class="red" data-a="no" data-id="${o.id}">Recusar</button></div></div>`).join('')+'</div>':'<p>Nenhum pedido novo.</p>')+
+    (pend.length?'<div class="grid">'+pend.map(o=>`<div class="card new"><div class="row"><b>${nm(o.mesas.numero)}</b><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span></div>${lista(o)}<div class="row"><b>${money(total(o.order_items))}</b><button data-a="ok" data-id="${o.id}">Gerar pedido</button><button class="red" data-a="no" data-id="${o.id}">Recusar</button></div></div>`).join('')+'</div>':'<p>Nenhum pedido novo.</p>')+
     '<h2>Mesas com conta aberta</h2>'+
-    (Object.keys(mesas).length?'<div class="grid">'+Object.entries(mesas).map(([mid,os])=>`<div class="card"><div class="row"><h3 style="margin:0">Mesa ${os[0].mesas.numero}</h3><b style="margin-left:auto">${money(os.reduce((a,o)=>a+total(o.order_items),0))}</b></div>`+
+    (Object.keys(mesas).length?'<div class="grid">'+Object.entries(mesas).map(([mid,os])=>`<div class="card"><div class="row"><h3 style="margin:0">${nm(os[0].mesas.numero)}</h3><b style="margin-left:auto">${money(os.reduce((a,o)=>a+total(o.order_items),0))}</b></div>`+
       os.map(o=>`<div class="row"><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span><button class="sec" style="margin-left:auto;padding:4px 10px" data-a="re" data-id="${o.id}">Reimprimir</button></div>${lista(o)}`).join('')+
       `<button class="yel" data-a="pay" data-id="${mid}">Fechar conta</button></div>`).join('')+'</div>':'<p>Nenhuma mesa com conta aberta.</p>');
   app.onclick=async e=>{
@@ -175,12 +176,66 @@ async function caixa(){
   };
 }
 
+/* ---------- Novo pedido lançado pelo caixa (mesa ou balcão) ---------- */
+async function novoPedido(){
+  const[m,c,p]=await Promise.all([sb.from('mesas').select('*').order('numero'),sb.from('categories').select('*').eq('ativo',true).order('ordem'),sb.from('products').select('*').eq('ativo',true).order('nome')]);
+  if(m.error||c.error||p.error)return toast('Não foi possível carregar. Tente de novo.');
+  const todas=m.data||[],balcao=todas.find(x=>Number(x.numero)===0),mesas=todas.filter(x=>Number(x.numero)!==0),prods=p.data||[],cart={};
+  let destino='',cliente='',obs='';
+  const ehBalcao=()=>!!balcao&&destino===balcao.token;
+  const draw=()=>{
+    const n=Object.values(cart).reduce((a,b)=>a+b,0),tot=prods.reduce((a,x)=>a+(cart[x.id]||0)*x.preco,0);
+    const lista=(c.data||[]).map(cat=>{
+      const ps=prods.filter(x=>x.category_id===cat.id);if(!ps.length)return'';
+      return`<h2 class="cat">${esc(cat.nome)}</h2>`+ps.map(x=>{
+        const out=x.controla_estoque&&x.estoque_atual<=0;
+        return`<div class="it"><div><h3>${esc(x.nome)}</h3><span class="price">${money(x.preco)}</span></div>`+
+        (out?'<span class="tag">Esgotado</span>':`<div class="qty">${cart[x.id]?`<button aria-label="Tirar um" data-a="-" data-id="${x.id}">−</button><b>${cart[x.id]}</b>`:''}<button aria-label="Adicionar" data-a="+" data-id="${x.id}">+</button></div>`)+'</div>'}).join('')}).join('')
+      ||'<p>O cardápio ainda não tem produtos.</p>';
+    app.innerHTML='<h2>Novo pedido</h2><div class="card"><div class="grid"><select id="dest" aria-label="Mesa ou balcão"><option value="">Escolha a mesa ou o balcão</option>'+
+      (balcao?`<option value="${esc(balcao.token)}"${ehBalcao()?' selected':''}>Balcão (paga na hora)</option>`:'')+
+      mesas.map(x=>`<option value="${esc(x.token)}"${destino===x.token?' selected':''}>Mesa ${esc(x.numero)}</option>`).join('')+'</select>'+
+      (ehBalcao()?`<input id="cli" maxlength="40" placeholder="Nome ou senha do cliente (opcional)" value="${esc(cliente)}">`:'')+'</div>'+
+      (balcao?'':'<p class="mut">O balcão ainda não foi criado no banco de dados. Só dá para lançar pedidos de mesa por enquanto.</p>')+'</div>'+
+      lista+
+      `<h2>Observações</h2><textarea id="obs" rows="2" maxlength="300" placeholder="Ex.: sem cebola">${esc(obs)}</textarea>`+
+      (n?`<div class="bar"><button class="yel" id="lancar">Lançar pedido · ${n} ${n>1?'itens':'item'} · ${money(tot)}</button></div>`:'');
+  };
+  const lancar=async b=>{
+    if(!destino)return toast('Escolha a mesa ou o balcão.');
+    const itens=Object.entries(cart).map(([product_id,quantidade])=>({product_id,quantidade}));
+    if(!itens.length)return toast('Adicione pelo menos um item.');
+    const bal=ehBalcao();
+    const nota=[bal&&cliente.trim()?'Cliente: '+cliente.trim():'',obs.trim()].filter(Boolean).join(' - ');
+    b.disabled=true;
+    const{data,error}=await sb.rpc('criar_pedido',{p_token:destino,p_observacao:nota||null,p_itens:itens});
+    if(error){toast(error.message||'Não foi possível lançar o pedido.');b.disabled=false;return}
+    const reset=()=>{for(const k in cart)delete cart[k];destino='';cliente='';obs=''};
+    const{data:o}=await sb.from('orders').select('*,mesas(numero),order_items(*)').eq('numero',data[0].pedido_numero).order('criado_em',{ascending:false}).limit(1).maybeSingle();
+    if(!o){reset();toast('Pedido criado. Confira na tela do Caixa.');return draw()}
+    const{error:e2}=await sb.rpc('aprovar_pedido',{p_order_id:o.id});
+    if(e2){reset();toast('Pedido criado, mas falta aprovar: '+e2.message);return draw()}
+    await imprimir(o);
+    if(bal)await sb.rpc('fechar_mesa',{p_mesa_id:o.mesa_id});
+    reset();toast('Pedido '+nm(o.mesas.numero)+' lançado e enviado para impressão.');draw();
+  };
+  app.onchange=e=>{if(e.target.id==='dest'){destino=e.target.value;draw()}};
+  app.oninput=e=>{if(e.target.id==='cli')cliente=e.target.value;if(e.target.id==='obs')obs=e.target.value};
+  app.onclick=async e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.a){const id=b.dataset.id;cart[id]=Math.min(20,(cart[id]||0)+(b.dataset.a==='+'?1:-1));if(cart[id]<1)delete cart[id];return draw()}
+    if(b.id==='lancar')await lancar(b);
+  };
+  draw();
+}
+
 async function produtos(){
   const[c,p]=await Promise.all([sb.from('categories').select('*').order('ordem'),sb.from('products').select('*').order('nome')]);
   const cn=Object.fromEntries(c.data.map(x=>[x.id,x.nome]));const byId=Object.fromEntries(p.data.map(x=>[x.id,x]));let editId=null;
   app.innerHTML=`<h2 id="ft">Novo produto</h2><div class="card"><div class="grid"><input id="n" placeholder="Nome"><select id="c">${c.data.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select><input id="pr" type="number" step="0.01" min="0" placeholder="Preço (R$)"><input id="d" placeholder="Descrição (opcional)"></div><label class="row"><input id="ce" type="checkbox" style="width:auto"> Controlar estoque deste produto</label><div class="row"><button id="add">Adicionar produto</button><button class="sec" id="cancel" style="display:none">Cancelar</button></div></div>`+
     '<h2>Produtos</h2><div style="overflow-x:auto"><table><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ativo</th><th></th></tr>'+
     p.data.map(x=>`<tr><td>${esc(x.nome)}</td><td>${esc(cn[x.category_id])}</td><td><input type="number" step="0.01" min="0" value="${x.preco}" data-f="preco" data-id="${x.id}" style="width:100px"></td><td>${x.controla_estoque?`${x.estoque_atual} <button class="sec" style="padding:3px 10px" data-a="est" data-id="${x.id}">+ Entrada</button>`:'-'}</td><td><input type="checkbox" style="width:auto" data-f="ativo" data-id="${x.id}" ${x.ativo?'checked':''}></td><td><button class="sec" style="padding:3px 10px" data-a="edit" data-id="${x.id}">Editar</button></td></tr>`).join('')+'</table></div>';
+  app.oninput=null;
   app.onchange=async e=>{
     const t=e.target,f=t.dataset.f;if(!f)return;
     const{error}=await sb.from('products').update({[f]:f==='ativo'?t.checked:+t.value}).eq('id',t.dataset.id);
@@ -243,6 +298,7 @@ async function faturamento(){
     $('#res').innerHTML=`<div class="grid" style="margin-top:12px"><div class="card"><div class="mut">Faturamento (contas pagas)</div><div class="kpi">${money(fat)}</div></div><div class="card"><div class="mut">Pedidos pagos</div><div class="kpi">${rows.length}</div></div><div class="card"><div class="mut">Ticket médio por pedido</div><div class="kpi">${money(rows.length?fat/rows.length:0)}</div></div><div class="card"><div class="mut">Em aberto agora (mesas ainda não fechadas)</div><div class="kpi" style="color:var(--red)">${money(aberto)}</div></div></div>`+
       (rows.length?`<h2>Por dia</h2><div style="overflow-x:auto"><table><tr><th>Dia</th><th>Pedidos</th><th>Total</th></tr>`+Object.entries(dia).sort().map(([k,x])=>`<tr><td>${k.split('-').reverse().join('/')}</td><td>${x.n}</td><td>${money(x.v)}</td></tr>`).join('')+'</table></div>'+tb(cats,'Por categoria')+tb(prod,'Mais vendidos'):'<p>Nenhuma conta paga neste período.</p>');
   };
+  app.oninput=null;
   app.onchange=null;
   app.onclick=e=>{
     const b=e.target.closest('button');if(!b)return;
@@ -255,8 +311,9 @@ async function faturamento(){
 async function qr(){
   const{data}=await sb.from('mesas').select('*').order('numero');
   const base=location.origin+location.pathname;
-  const cards=data.map(m=>{const q=qrcode(0,'M');q.addData(base+'?mesa='+m.token);q.make();return`<div><img alt="QR code da mesa ${m.numero}" src="${q.createDataURL(6,2)}"><br>Mesa ${m.numero}</div>`}).join('');
+  const cards=(data||[]).filter(m=>Number(m.numero)!==0).map(m=>{const q=qrcode(0,'M');q.addData(base+'?mesa='+m.token);q.make();return`<div><img alt="QR code da mesa ${m.numero}" src="${q.createDataURL(6,2)}"><br>Mesa ${m.numero}</div>`}).join('');
   app.innerHTML=`<h2>QR codes das mesas</h2><p>Imprima e cole um em cada mesa. Cada QR abre o cardápio da mesa certa.</p><button id="pq">Imprimir QR codes</button><div class="grid qrs" style="margin-top:16px">${cards}</div>`;
+  app.oninput=null;
   app.onchange=null;
   app.onclick=e=>{if(e.target.id==='pq'){$('#print-area').innerHTML=`<div class="qrs">${cards}</div>`;window.print()}};
 }
