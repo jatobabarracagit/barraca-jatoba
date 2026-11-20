@@ -139,7 +139,7 @@ async function staff(){
   $('#nav').onclick=e=>{const g=e.target.dataset.go;if(g==='sair')sb.auth.signOut().then(()=>location.reload());else if(g)show(g)};
   if(!me){app.innerHTML='<h2>Sem permissão</h2><p>Esse usuário não faz parte da equipe.</p>';return}
   let view='caixa';
-  const show=v=>{view=v;({caixa,novo:novoPedido,produtos,faturamento,qr})[v]()};
+  const show=v=>{view=v;({caixa,novo:()=>novoPedido(()=>show('caixa')),produtos,faturamento,qr})[v]()};
   sb.channel('pedidos').on('postgres_changes',{event:'*',schema:'public',table:'orders'},p=>{if(p.eventType==='INSERT')beep();if(view==='caixa')caixa()}).subscribe();
   setInterval(()=>{if(view==='caixa')caixa()},20000);
   show('caixa');
@@ -157,10 +157,13 @@ async function caixa(){
   if(error)return toast(error.message);
   data.forEach(o=>O[o.id]=o);
   const pend=data.filter(o=>o.status==='pendente'),mesas={};
-  data.filter(o=>o.status==='aprovado').forEach(o=>(mesas[o.mesa_id]??=[]).push(o));
+  const aprov=data.filter(o=>o.status==='aprovado'),bal=aprov.filter(o=>Number(o.mesas.numero)===0);
+  aprov.filter(o=>Number(o.mesas.numero)!==0).forEach(o=>(mesas[o.mesa_id]??=[]).push(o));
   const lista=o=>'<ul>'+o.order_items.map(i=>`<li>${i.quantidade}x ${esc(i.nome_produto)}</li>`).join('')+'</ul>'+(o.observacao?`<p><i>Obs: ${esc(o.observacao)}</i></p>`:'');
   app.innerHTML=`<h2>Aguardando aprovação (${pend.length})</h2>`+
     (pend.length?'<div class="grid">'+pend.map(o=>`<div class="card new"><div class="row"><b>${nm(o.mesas.numero)}</b><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span></div>${lista(o)}<div class="row"><b>${money(total(o.order_items))}</b><button data-a="ok" data-id="${o.id}">Gerar pedido</button><button class="red" data-a="no" data-id="${o.id}">Recusar</button></div></div>`).join('')+'</div>':'<p>Nenhum pedido novo.</p>')+
+    `<h2>Pedidos do balcão (${bal.length})</h2>`+
+    (bal.length?'<div class="grid">'+bal.map(o=>`<div class="card"><div class="row"><b>Balcão</b><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span><b style="margin-left:auto">${money(total(o.order_items))}</b></div>${lista(o)}<div class="row"><button class="sec" data-a="re" data-id="${o.id}">Reimprimir</button><button class="yel" data-a="done" data-id="${o.id}">Concluir pedido</button></div></div>`).join('')+'</div>':'<p>Nenhum pedido do balcão em andamento.</p>')+
     '<h2>Mesas com conta aberta</h2>'+
     (Object.keys(mesas).length?'<div class="grid">'+Object.entries(mesas).map(([mid,os])=>`<div class="card"><div class="row"><h3 style="margin:0">${nm(os[0].mesas.numero)}</h3><b style="margin-left:auto">${money(os.reduce((a,o)=>a+total(o.order_items),0))}</b></div>`+
       os.map(o=>`<div class="row"><span class="tag">#${o.numero}</span><span>${hora(o.criado_em)}</span><button class="sec" style="margin-left:auto;padding:4px 10px" data-a="re" data-id="${o.id}">Reimprimir</button></div>${lista(o)}`).join('')+
@@ -171,13 +174,14 @@ async function caixa(){
     if(a==='ok'){const{error}=await sb.rpc('aprovar_pedido',{p_order_id:id});if(error){toast(error.message);return caixa()}await imprimir(O[id])}
     if(a==='no'&&confirm('Recusar este pedido?'))await sb.rpc('recusar_pedido',{p_order_id:id});
     if(a==='re')await imprimir(O[id],true);
+    if(a==='done'&&confirm('Concluir este pedido do balcão?')){const{error}=await sb.rpc('fechar_pedido',{p_order_id:id});if(error)toast(error.message)}
     if(a==='pay'&&confirm('Fechar a conta desta mesa?'))await sb.rpc('fechar_mesa',{p_mesa_id:id});
     caixa();
   };
 }
 
 /* ---------- Novo pedido lançado pelo caixa (mesa ou balcão) ---------- */
-async function novoPedido(){
+async function novoPedido(onDone){
   const[m,c,p]=await Promise.all([sb.from('mesas').select('*').order('numero'),sb.from('categories').select('*').eq('ativo',true).order('ordem'),sb.from('products').select('*').eq('ativo',true).order('nome')]);
   if(m.error||c.error||p.error)return toast('Não foi possível carregar. Tente de novo.');
   const todas=m.data||[],balcao=todas.find(x=>Number(x.numero)===0),mesas=todas.filter(x=>Number(x.numero)!==0),prods=p.data||[],cart={};
@@ -193,7 +197,7 @@ async function novoPedido(){
         (out?'<span class="tag">Esgotado</span>':`<div class="qty">${cart[x.id]?`<button aria-label="Tirar um" data-a="-" data-id="${x.id}">−</button><b>${cart[x.id]}</b>`:''}<button aria-label="Adicionar" data-a="+" data-id="${x.id}">+</button></div>`)+'</div>'}).join('')}).join('')
       ||'<p>O cardápio ainda não tem produtos.</p>';
     app.innerHTML='<h2>Novo pedido</h2><div class="card"><div class="grid"><select id="dest" aria-label="Mesa ou balcão"><option value="">Escolha a mesa ou o balcão</option>'+
-      (balcao?`<option value="${esc(balcao.token)}"${ehBalcao()?' selected':''}>Balcão (paga na hora)</option>`:'')+
+      (balcao?`<option value="${esc(balcao.token)}"${ehBalcao()?' selected':''}>Balcão</option>`:'')+
       mesas.map(x=>`<option value="${esc(x.token)}"${destino===x.token?' selected':''}>Mesa ${esc(x.numero)}</option>`).join('')+'</select>'+
       (ehBalcao()?`<input id="cli" maxlength="40" placeholder="Nome ou senha do cliente (opcional)" value="${esc(cliente)}">`:'')+'</div>'+
       (balcao?'':'<p class="mut">O balcão ainda não foi criado no banco de dados. Só dá para lançar pedidos de mesa por enquanto.</p>')+'</div>'+
@@ -216,8 +220,8 @@ async function novoPedido(){
     const{error:e2}=await sb.rpc('aprovar_pedido',{p_order_id:o.id});
     if(e2){reset();toast('Pedido criado, mas falta aprovar: '+e2.message);return draw()}
     await imprimir(o);
-    if(bal)await sb.rpc('fechar_mesa',{p_mesa_id:o.mesa_id});
-    reset();toast('Pedido '+nm(o.mesas.numero)+' lançado e enviado para impressão.');draw();
+    reset();toast('Pedido '+nm(o.mesas.numero)+' lançado e enviado para impressão.');
+    if(onDone)onDone();else draw();
   };
   app.onchange=e=>{if(e.target.id==='dest'){destino=e.target.value;draw()}};
   app.oninput=e=>{if(e.target.id==='cli')cliente=e.target.value;if(e.target.id==='obs')obs=e.target.value};
