@@ -236,7 +236,7 @@ async function novoPedido(onDone){
 async function produtos(){
   const[c,p]=await Promise.all([sb.from('categories').select('*').order('ordem'),sb.from('products').select('*').order('nome')]);
   const cn=Object.fromEntries(c.data.map(x=>[x.id,x.nome]));const byId=Object.fromEntries(p.data.map(x=>[x.id,x]));let editId=null;
-  app.innerHTML=`<h2 id="ft">Novo produto</h2><div class="card"><div class="grid"><input id="n" placeholder="Nome"><select id="c">${c.data.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select><input id="pr" type="number" step="0.01" min="0" placeholder="Preço (R$)"><input id="d" placeholder="Descrição (opcional)"></div><label class="row"><input id="ce" type="checkbox" style="width:auto"> Controlar estoque deste produto</label><div class="row"><button id="add">Adicionar produto</button><button class="sec" id="cancel" style="display:none">Cancelar</button></div></div>`+
+  app.innerHTML=`<h2>Nova categoria</h2><div class="card"><div class="row"><input id="cn" maxlength="40" placeholder="Nome da categoria (ex.: Sobremesas)" style="flex:1;min-width:200px"><button id="addc">Adicionar categoria</button></div><p class="mut" style="margin:6px 0 0">Categorias atuais: ${c.data.length?c.data.map(x=>esc(x.nome)).join(', '):'nenhuma ainda'}</p></div><h2 id="ft">Novo produto</h2><div class="card"><div class="grid"><input id="n" placeholder="Nome"><select id="c">${c.data.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select><input id="pr" type="number" step="0.01" min="0" placeholder="Preço (R$)"><input id="d" placeholder="Descrição (opcional)"></div><label class="row"><input id="ce" type="checkbox" style="width:auto"> Controlar estoque deste produto</label><div class="row"><button id="add">Adicionar produto</button><button class="sec" id="cancel" style="display:none">Cancelar</button></div></div>`+
     '<h2>Produtos</h2><div style="overflow-x:auto"><table><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Ativo</th><th></th></tr>'+
     p.data.map(x=>`<tr><td>${esc(x.nome)}</td><td>${esc(cn[x.category_id])}</td><td><input type="number" step="0.01" min="0" value="${x.preco}" data-f="preco" data-id="${x.id}" style="width:100px"></td><td>${x.controla_estoque?`${x.estoque_atual} <button class="sec" style="padding:3px 10px" data-a="est" data-id="${x.id}">+ Entrada</button>`:'-'}</td><td><input type="checkbox" style="width:auto" data-f="ativo" data-id="${x.id}" ${x.ativo?'checked':''}></td><td><button class="sec" style="padding:3px 10px" data-a="edit" data-id="${x.id}">Editar</button></td></tr>`).join('')+'</table></div>';
   app.oninput=null;
@@ -253,6 +253,15 @@ async function produtos(){
       const campos={nome,preco,category_id:$('#c').value,descricao:$('#d').value.trim()||null,controla_estoque:$('#ce').checked};
       const{error}=editId?await sb.from('products').update(campos).eq('id',editId):await sb.from('products').insert(campos);
       if(error)return toast(error.message);toast(editId?'Produto atualizado.':'Produto adicionado.');produtos();
+    }
+    if(b.id==='addc'){
+      const nome=$('#cn').value.trim();
+      if(!nome)return toast('Digite o nome da categoria.');
+      if(c.data.some(x=>x.nome.trim().toLowerCase()===nome.toLowerCase()))return toast('Essa categoria já existe.');
+      const ordem=Math.max(0,...c.data.map(x=>Number(x.ordem)||0))+1;
+      const{error}=await sb.from('categories').insert({nome,ordem,ativo:true});
+      if(error)return toast(error.message);
+      toast('Categoria adicionada.');produtos();
     }
     if(b.id==='cancel')produtos();
     if(b.dataset.a==='edit'){
